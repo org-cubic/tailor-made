@@ -75,6 +75,32 @@
   .toolbar .tools button.on{background:#111;color:#fff}
   .toolbar .tools button.danger{color:#c0262d}
   .toolbar .sep{width:1px;height:28px;background:#ddd;margin:0 4px}
+  .toolbar .tools button.primary{background:#111;color:#fff}
+  .summary{position:fixed;inset:0;z-index:40;background:#f3f2ef;overflow:auto;-webkit-overflow-scrolling:touch}
+  .sum-bar{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(255,255,255,.95);border-bottom:1px solid #ddd}
+  .sum-bar button{font:inherit;font-size:15px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid #ccc;background:#fff}
+  .sum-bar #sumPrint{background:#111;color:#fff;border-color:#111}
+  .sum-title{font-weight:700;font-size:19px}
+  .sum-body{max-width:1000px;margin:0 auto;padding:14px 14px 40px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .sum-meta{grid-column:1/-1;color:#666;font-size:14px}
+  .sum-card{background:#fff;border:1px solid #e2e0da;border-radius:12px;padding:12px 14px;break-inside:avoid}
+  .sum-card.wide{grid-column:1/-1}
+  .sum-card h4{margin:0 0 8px;font-size:16px;border-bottom:1.5px solid #111;padding-bottom:4px}
+  .sum-row{display:flex;gap:10px;padding:5px 0;border-bottom:1px dotted #ddd;font-size:15px;align-items:center}
+  .sum-row:last-child{border-bottom:none}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;column-gap:24px}
+  .cols2 .sum-row:nth-last-child(2){border-bottom:none}
+  .sum-row .k{flex:none;width:42%;color:#555}
+  .sum-row .v{flex:1;font-weight:600;color:#111;display:flex;align-items:center;gap:8px;min-width:0;word-break:break-word}
+  .sum-row .v.empty{color:#bbb;font-weight:400}
+  .sum-row .v img,.sum-row .v svg{width:38px;height:auto;max-height:50px;object-fit:cover;border:1px solid #999;border-radius:3px;flex:none}
+  .sum-meas{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .sum-meas div{border:1px solid #e2e0da;border-radius:8px;padding:6px 8px;font-size:13px;color:#555}
+  .sum-meas b{display:block;font-size:20px;color:#111;text-align:right}
+  .sum-meas .empty b{color:#ccc;font-weight:400}
+  .sum-ink{grid-column:1/-1;background:#fff8e1;border:1px solid #f0d27a;border-radius:12px;padding:10px 14px;font-size:14px}
+  body.show-summary{overflow:hidden}
+  @media (max-width:700px){.sum-body{grid-template-columns:1fr}.cols2{grid-template-columns:1fr}.cols2 .sum-row:nth-last-child(2){border-bottom:1px dotted #ddd}.sum-meas{grid-template-columns:repeat(2,1fr)}.sum-title{font-size:16px}.sum-bar button{padding:0 10px;font-size:14px}}
   #ink,#live{position:absolute;left:0;top:0;z-index:10;pointer-events:none}
   #live{z-index:11}
   body.convert .field>input:not([type]),body.convert .line,body.convert .meas input{background:rgba(26,79,216,.05)}
@@ -86,6 +112,8 @@
   .cands button.del{color:#b00}
   .status{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:96px;background:#111;color:#fff;padding:8px 16px;border-radius:20px;font-size:15px;max-width:90vw;text-align:center}
   @media print{
+    body.show-summary #fitBox,body.show-summary .sheet{display:none}
+    .summary{position:static;background:#fff;overflow:visible}.sum-bar{display:none}.sum-body{padding:0}
     body{background:#fff}.toolbar,.cands,.status,#live{display:none}.sheet{box-shadow:none;margin:0;max-width:none}
     @page{size:A4;margin:8mm}
   }
@@ -287,9 +315,18 @@
     <button type="button" id="undoBtn" title="ย้อน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg><span>ย้อน</span></button>
     <button type="button" id="clearInk" title="ล้างลายมือ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span>ล้างลายมือ</span></button>
     <i class="sep"></i>
+    <button type="button" id="saveBtn" class="primary" title="บันทึก"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/></svg><span>บันทึก</span></button>
     <button type="button" id="printBtn" title="พิมพ์ / PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg><span>พิมพ์</span></button>
     <button type="button" id="resetBtn" class="danger" title="ล้างฟอร์ม"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6"/><path d="M5 15a8 8 0 102-8.5L4 10"/></svg><span>ล้างฟอร์ม</span></button>
   </div>
+</div>
+<div id="summary" class="summary" hidden>
+  <div class="sum-bar">
+    <button type="button" id="sumBack">← กลับไปแก้ไข</button>
+    <div class="sum-title">สรุปใบสั่งตัด</div>
+    <button type="button" id="sumPrint">🖨 พิมพ์ / PDF</button>
+  </div>
+  <div class="sum-body" id="sumBody"></div>
 </div>
 <div id="cands" class="cands" hidden></div>
 <div id="status" class="status" hidden></div>
@@ -706,6 +743,69 @@ function insertText(target,c){
 }
 function hideCands(){cands.hidden=true;}
 window.addEventListener('scroll',hideCands,{passive:true});
+
+
+/* ---------- save + summary ---------- */
+const $f=n=>form.elements[n];
+const txt=n=>{const el=$f(n);return el&&el.value?el.value.trim():''};
+const chk=n=>{const el=$f(n);return !!(el&&el.checked)};
+function radio(n){
+  const el=form.querySelector(`input[name="${n}"]:checked`); if(!el) return null;
+  const lab=el.closest('label'); const cap=lab&&lab.querySelector('.cap');
+  let label=(cap?cap.innerText:lab?lab.innerText:el.value).replace(/\s+/g,' ').trim();
+  const pic=lab&&lab.querySelector('img,svg');
+  return {label, pic: pic?pic.outerHTML:''};
+}
+const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const join=(...a)=>a.filter(Boolean).join(' · ');
+function row(k,v,pic){const empty=!v;return `<div class="sum-row"><div class="k">${esc(k)}</div><div class="v${empty?' empty':''}">${pic||''}${empty?'—':esc(v)}</div></div>`;}
+function rrow(k,n){const r=radio(n);return row(k,r&&r.label,r&&r.pic);}
+function card(title,rows,wide,cols){return `<div class="sum-card${wide?' wide':''}"><h4>${esc(title)}</h4><div class="${cols?'cols2':''}">${rows.join('')}</div></div>`;}
+function buildSummary(){
+  const visit=radio('visit');
+  const shawlEl=form.querySelector('input[name=shawl_opt]:checked');
+  const shawlTxt=shawlEl?({satin:'ผ้าซาตินสี '+txt('satin_color'),suit:'สีตามสูท',other:txt('shawl_other')||'อื่นๆ'}[shawlEl.value]||'').trim():'';
+  const holeEl=form.querySelector('input[name=lapel_hole]:checked');
+  const holeTxt=holeEl?(holeEl.value+' รังดุม'+(txt('lapel_hole'+holeEl.value+'_color')?' สี '+txt('lapel_hole'+holeEl.value+'_color'):'')):'';
+  const meas=M.map(([t,n])=>{const v=txt('m_'+n);return `<div class="${v?'':'empty'}">${esc(t)}<b>${v?esc(v):'—'}</b></div>`;}).join('');
+  const now=new Date();
+  let h=`<div class="sum-meta">บันทึกเมื่อ ${now.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})} เวลา ${now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} น.</div>`;
+  if(strokes.some(s=>!s.erase)) h+=`<div class="sum-ink">✍️ มีลายมือที่เขียนไว้บนใบงาน (โหมดเขียนลายมือ) ซึ่งไม่ได้แปลงเป็นตัวอักษร — ดูได้ที่ใบงานหรือในไฟล์ที่พิมพ์</div>`;
+  h+=card('ข้อมูลลูกค้า',[
+    row('ประเภทลูกค้า',visit&&visit.label),row('ชื่อ/นามสกุล',txt('cust_name')),row('ชื่อเล่น',txt('nickname')),
+    row('โทร.',txt('phone')),row('เพศ',radio('gender')&&radio('gender').label),row('ส่วนสูง',txt('height')),row('น้ำหนัก',txt('weight')),
+    row('ที่อยู่',join(txt('address1'),txt('address2'))),row('งานทีม',txt('team')),
+    row('วันที่ซื้อ/สาขา',txt('buy_date_branch')),row('วันที่นัดรับ/สาขา',txt('pickup_date_branch')),row('พนักงานขาย',txt('sales'))],true,true);
+  h+=card('ผ้าและซับใน',[
+    row('ผ้าหลัก',txt('main_fabric')),row('ผ้าสำรอง',txt('spare_fabric')),row('ผ้าซับใน',txt('lining_fabric')),row('กระดุม',txt('button')),
+    rrow('Wool','wool'),row('กุ๊นสาบ - ในสี',txt('piping_color')),row('ด้านในสาบ - ซับในสี',txt('facing_color')),rrow('ซับใน','lining')]);
+  h+=card('รูปร่างและทรง',[
+    rrow('ไหล่','shoulder'),rrow('รูปร่าง','body'),rrow('ทรง','fit'),rrow('สถานะงาน','stage')]);
+  h+=card('แบบเสื้อ',[
+    rrow('แบบกระดุมเอว','waist_btn'),rrow('แบบกระเป๋าอก','chest_pocket'),rrow('แบบกระเป๋าเสื้อ','pocket'),rrow('แบบผ่าด้านหลัง','vent')]);
+  h+=card('ปก',[
+    rrow('แบบปก','lapel'),row('ปกกล้วยหอม',shawlTxt),row('ขนาดปก',txt('lapel_size')&&txt('lapel_size')+' นิ้ว'),
+    row('เดินด้ายดำน้ำ',chk('pickstitch')?('ใช่'+(txt('pickstitch_color')?' สี '+txt('pickstitch_color'):'')):''),
+    row('Milanese Bottonhole',chk('milanese')?'ใช่':''),row('รังดุมปก',holeTxt)]);
+  h+=card('ขนาดตัว (นิ้ว)',[`<div class="sum-meas">${meas}</div>`],true);
+  h+=card('กระดุมและด้าย',[
+    row('จำนวนกระดุม',join(txt('sleeve_btn_qty')&&txt('sleeve_btn_qty')+' เม็ด',chk('kissing')?'แขนซ้อน':'')),
+    row('ด้ายเย็บดุมสี',join(txt('btn_thread'),chk('btn_thread_match')?'ตามผ้า':'')),
+    row('ด้ายรังดุมสี',join(txt('hole_thread'),chk('hole_thread_match')?'ตามผ้า':'')),
+    row('รังดุมเม็ดสุดท้าย',txt('last_hole')),row('สีด้ายเย็บ',txt('sew_thread'))]);
+  h+=card('การปัก',[
+    rrow('ตำแหน่งการปัก','emb_pos'),rrow('รูปแบบการปัก','emb_style'),row('สีปัก',txt('emb_color')),row('ข้อความปัก',txt('emb_text'))]);
+  h+=card('งานผลิต',[
+    row('ตัดผ้า',txt('p_cut')),row('จัดอะไหล่',txt('p_parts')),row('จัดกระดุม',txt('p_buttons')),row('คำนวณผ้า',txt('p_calc'))]);
+  h+=card('Note',[row('หมายเหตุ',txt('note'))]);
+  document.getElementById('sumBody').innerHTML=h;
+}
+const summaryEl=document.getElementById('summary');
+function openSummary(){if(pending) flush();save();buildSummary();summaryEl.hidden=false;summaryEl.scrollTop=0;document.body.classList.add('show-summary');toast('บันทึกแล้ว');}
+function closeSummary(){summaryEl.hidden=true;document.body.classList.remove('show-summary');}
+document.getElementById('saveBtn').onclick=openSummary;
+document.getElementById('sumBack').onclick=closeSummary;
+document.getElementById('sumPrint').onclick=()=>window.print();
 
 /* ---------- toolbar ---------- */
 const modeInk=document.getElementById('modeInk'),modeConv=document.getElementById('modeConv'),eraseBtn=document.getElementById('eraseBtn');
