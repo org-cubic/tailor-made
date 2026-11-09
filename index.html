@@ -311,12 +311,10 @@
     <button type="button" id="modeConv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M12 6v13M9 19h6"/></svg><span>แปลงเป็นตัวอักษร</span></button>
   </div>
   <div class="tools">
-    <button type="button" id="eraseBtn" title="ยางลบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20h12"/><path d="M4.5 14.5l9-9a2 2 0 012.8 0l2.2 2.2a2 2 0 010 2.8L11 18H8z"/><path d="M9 10l5 5"/></svg><span>ยางลบ</span></button>
     <button type="button" id="undoBtn" title="ย้อน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg><span>ย้อน</span></button>
     <button type="button" id="clearInk" title="ล้างลายมือ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span>ล้างลายมือ</span></button>
     <i class="sep"></i>
     <button type="button" id="saveBtn" class="primary" title="บันทึก"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/></svg><span>บันทึก</span></button>
-    <button type="button" id="printBtn" title="พิมพ์ / PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg><span>พิมพ์</span></button>
     <button type="button" id="resetBtn" class="danger" title="ล้างฟอร์ม"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6"/><path d="M5 15a8 8 0 102-8.5L4 10"/></svg><span>ล้างฟอร์ม</span></button>
   </div>
 </div>
@@ -645,8 +643,6 @@ sheet.addEventListener('pointerdown',e=>{
     if(!target&&pending&&nearField(pending.target,e.clientX,e.clientY)) target=pending.target;
     if(target) kind='conv';
   }
-  // measurement table: always handwriting -> numbers, in either mode
-  if(kind==='ink'&&!eraser){const t=fieldAt(e.clientX,e.clientY)||(pending&&nearField(pending.target,e.clientX,e.clientY)?pending.target:null);if(t&&isMeas(t)){target=t;kind='conv';}}
   if(pending&&(kind!=='conv'||pending.target!==target)) flush();
   clearTimeout(timer);
   cur={id:e.pointerId,type:e.pointerType,pts:[rel(e)],sx:e.clientX,sy:e.clientY,moved:false,kind,target,el:e.target};
@@ -808,7 +804,7 @@ document.getElementById('sumBack').onclick=closeSummary;
 document.getElementById('sumPrint').onclick=()=>window.print();
 
 /* ---------- toolbar ---------- */
-const modeInk=document.getElementById('modeInk'),modeConv=document.getElementById('modeConv'),eraseBtn=document.getElementById('eraseBtn');
+const modeInk=document.getElementById('modeInk'),modeConv=document.getElementById('modeConv');
 function setMode(m){
   if(pending) flush();
   mode=m;localStorage.setItem('suitcube-pen-mode',m);
@@ -817,13 +813,11 @@ function setMode(m){
   setEraser(false);
   toast(m==='ink'?'โหมดลายมือ: เขียนตรงไหนก็ได้ ลายมือจะอยู่บนใบงาน':'โหมดแปลงตัวอักษร: เขียนลงบนช่อง ระบบจะแปลงเป็นตัวพิมพ์ให้');
 }
-function setEraser(on){eraser=on;eraseBtn.classList.toggle('on',on);}
+function setEraser(on){eraser=on;}
 modeInk.onclick=()=>setMode('ink');
 modeConv.onclick=()=>setMode('convert');
-eraseBtn.onclick=()=>setEraser(!eraser);
 document.getElementById('undoBtn').onclick=()=>{strokes.pop();redraw();save();};
 document.getElementById('clearInk').onclick=()=>{if(confirm('ล้างลายมือทั้งหมด?')){strokes=[];redraw();save();}};
-document.getElementById('printBtn').onclick=()=>window.print();
 document.getElementById('resetBtn').onclick=()=>{if(confirm('ล้างข้อมูลในฟอร์มทั้งหมด?')){form.reset();strokes=[];pending=null;redraw();redrawLive();localStorage.removeItem(KEY);}};
 
 window.addEventListener('load',()=>{fitPhone();sizeCanvas();load();fitPhone();
