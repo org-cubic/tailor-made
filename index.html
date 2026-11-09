@@ -113,7 +113,11 @@
   </div>
   <div class="field">ที่อยู่ <input name="address1"></div>
   <div class="field"><input name="address2"></div>
-  <div class="field">งานทีม <input name="team"></div>
+  <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:4px 14px">
+    <div class="field">งานทีม <input name="team"></div>
+    <div class="field">ส่วนสูง <input name="height" inputmode="decimal"></div>
+    <div class="field">น้ำหนัก <input name="weight" inputmode="decimal"></div>
+  </div>
 </div>
 
 <!-- ===== Row 1: fabric / lining / job ===== -->
@@ -239,10 +243,8 @@
   </div>
 </div>
 
-<!-- ===== Row 5: height / weight / production ===== -->
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px 14px;padding:8px 2px;align-items:end">
-  <div class="field">ส่วนสูง <input name="height" inputmode="decimal"></div>
-  <div class="field">น้ำหนัก <input name="weight" inputmode="decimal"></div>
+<!-- ===== Row 5: production ===== -->
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px 14px;padding:8px 2px;align-items:end">
   <div class="field">สีด้ายเย็บ <input name="sew_thread"></div>
   <div class="field">ตัดผ้า <input name="p_cut"></div>
   <div class="field">จัดอะไหล่ <input name="p_parts"></div>
