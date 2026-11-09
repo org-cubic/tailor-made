@@ -527,7 +527,7 @@ function load(){
   strokes=Array.isArray(d.__strokes)?d.__strokes:[];
   redraw();
 }
-form.addEventListener('input',e=>{const t=e.target;if(t.closest&&t.closest('.meas')){const v=t.value.replace(/[^0-9.\/ ½¼¾]/g,'');if(v!==t.value)t.value=v;}save();});form.addEventListener('change',save);
+form.addEventListener('input',e=>{const t=e.target;if(t.closest&&t.closest('.meas')){const v=(t.value.replace(/[^0-9.½¼¾]/g,'').match(/^\d{0,2}(\.\d?)?[½¼¾]?/)||[''])[0];if(v!==t.value)t.value=v;}save();});form.addEventListener('change',save);
 
 /* ---------- phones: shrink the iPad-width sheet to fit the screen ---------- */
 let SCALE=1;
@@ -579,6 +579,7 @@ sheet.addEventListener('touchmove',blockStylus,{passive:false});
 
 const isMeas=el=>!!el.closest('.meas');
 const NUM_OK=/^[0-9.\/ ½¼¾]+$/;
+const MEAS_OK=/^\d{1,2}(\.\d)?[½¼¾]?$/;
 function normNum(v){v=v.replace(/,/g,'.').replace(/\s+/g,' ').trim();
   const m=v.match(/^(\d{1,2})\s*([13])\/([24])$/);
   if(m){const f={'1/2':'½','1/4':'¼','3/4':'¾'}[m[2]+'/'+m[3]];if(f) return m[1]+f;}
@@ -690,23 +691,19 @@ function flush(){
 const cands=document.getElementById('cands');
 function insertText(target,c){
   const before=target.value;
-  const numeric=['numeric','decimal','tel'].includes(target.inputMode);
-  const join=s=>before?before.replace(/\s+$/,'')+(numeric?'':' ')+s:s;
-  target.value=join(c[0]);
+  if(isMeas(target)){
+    // keep appending digits while the number stays valid (max 2 digits); otherwise the new writing replaces it
+    let v=null;
+    for(const x of c){const s2=x.replace(/\s+/g,'');
+      if(MEAS_OK.test(before+s2)){v=before+s2;break;}
+      if(MEAS_OK.test(s2)){v=s2;break;}}
+    if(v===null){toast('ใส่ได้ไม่เกิน 2 หลัก — ลองเขียนใหม่');return;}
+    target.value=v;
+  }else{
+    const numeric=['numeric','decimal','tel'].includes(target.inputMode);
+    target.value=before?before.replace(/\s+$/,'')+(numeric?'':' ')+c[0]:c[0];
+  }
   target.dispatchEvent(new Event('input',{bubbles:true}));
-  // candidate bar for quick correction
-  cands.innerHTML='';
-  c.slice(0,5).forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=s;if(i===0)b.className='on';
-    b.onclick=()=>{target.value=join(s);target.dispatchEvent(new Event('input',{bubbles:true}));cands.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};
-    cands.appendChild(b);});
-  const del=document.createElement('button');del.type='button';del.textContent='✕ ลบ';del.className='del';
-  del.onclick=()=>{target.value=before;target.dispatchEvent(new Event('input',{bubbles:true}));hideCands();};
-  cands.appendChild(del);
-  const r=target.getBoundingClientRect();
-  cands.style.left=Math.max(8,Math.min(r.left,innerWidth-cands.offsetWidth-8))+'px';
-  cands.style.top=(r.bottom+6)+'px';
-  cands.hidden=false;
-  clearTimeout(hideCands.t);hideCands.t=setTimeout(hideCands,6000);
 }
 function hideCands(){cands.hidden=true;}
 window.addEventListener('scroll',hideCands,{passive:true});
