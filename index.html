@@ -101,7 +101,9 @@
   .sum-ink{grid-column:1/-1;background:#fff8e1;border:1px solid #f0d27a;border-radius:12px;padding:10px 14px;font-size:14px}
   body.show-summary{overflow:hidden}
   @media (max-width:700px){.sum-body{grid-template-columns:1fr}.cols2{grid-template-columns:1fr}.cols2 .sum-row:nth-last-child(2){border-bottom:1px dotted #ddd}.sum-meas{grid-template-columns:repeat(2,1fr)}.sum-title{font-size:16px}.sum-bar button{padding:0 10px;font-size:14px}}
+  .ver{text-align:right;font-size:11px;color:#aaa;margin-top:6px}
   #ink,#live{position:absolute;left:0;top:0;z-index:10;pointer-events:none}
+  body.inkmode #ink{pointer-events:auto;touch-action:pan-x pan-y}
   #live{z-index:11}
   body.convert .field>input:not([type]),body.convert .line,body.convert .meas input{background:rgba(26,79,216,.05)}
   input.busy,textarea.busy{background:linear-gradient(90deg,#eef3ff,#dfe8ff,#eef3ff);background-size:200% 100%;animation:busy 1s linear infinite}
@@ -303,6 +305,7 @@
 </div>
 
 </form>
+<div class="ver">เวอร์ชัน 2026-11-09 · 14</div>
 </div>
 
 <div class="toolbar">
@@ -637,8 +640,10 @@ function nearField(f,x,y){
 function rel(e){const r=sheet.getBoundingClientRect();return[(e.clientX-r.left)/SCALE,(e.clientY-r.top)/SCALE,e.pressure||.5,Date.now()];}
 
 let cur=null, pending=null, timer=null;
+function under(x,y){const pe=inkC.style.pointerEvents;inkC.style.pointerEvents='none';const el=document.elementFromPoint(x,y);inkC.style.pointerEvents=pe;return el;}
+let tch=null;   // finger tap on the ink layer -> forwarded to the control underneath
 sheet.addEventListener('pointerdown',e=>{
-  if(e.pointerType==='touch') return;               // fingers: normal scrolling & tapping
+  if(e.pointerType==='touch'){ if(e.target===inkC) tch={id:e.pointerId,x:e.clientX,y:e.clientY,t:Date.now()}; return; }
   if(e.pointerType==='mouse'&&e.button!==0) return;
   hideCands();
   let kind='ink', target=null;
@@ -649,7 +654,8 @@ sheet.addEventListener('pointerdown',e=>{
   }
   if(pending&&(kind!=='conv'||pending.target!==target)) flush();
   clearTimeout(timer);
-  cur={id:e.pointerId,type:e.pointerType,pts:[rel(e)],sx:e.clientX,sy:e.clientY,moved:false,kind,target,el:e.target};
+  const viaInk=e.target===inkC;
+  cur={id:e.pointerId,type:e.pointerType,pts:[rel(e)],sx:e.clientX,sy:e.clientY,moved:false,kind,target,el:viaInk?under(e.clientX,e.clientY):e.target,viaInk};
 });
 window.addEventListener('pointermove',e=>{
   if(!cur||e.pointerId!==cur.id) return;
@@ -668,7 +674,7 @@ function endStroke(e){
   if(!cur||e.pointerId!==cur.id) return;
   const c=cur; cur=null;
   if(!c.moved){                                     // a tap, not a stroke
-    if(c.type==='pen') tapOn(c.el);
+    if(c.type==='pen'||c.viaInk) tapOn(c.el);
     if(pending) timer=setTimeout(flush,900);
     return;
   }
@@ -681,8 +687,11 @@ function endStroke(e){
 }
 window.addEventListener('pointerup',endStroke);
 window.addEventListener('pointercancel',endStroke);
+window.addEventListener('pointerup',e=>{ if(tch&&e.pointerId===tch.id){ if(Math.hypot(e.clientX-tch.x,e.clientY-tch.y)<10&&Date.now()-tch.t<600) tapOn(under(e.clientX,e.clientY)); tch=null; } });
+window.addEventListener('pointercancel',e=>{ if(tch&&e.pointerId===tch.id) tch=null; });
 function tapOn(el){
   if(!el) return;
+  { const lab=el.closest&&el.closest('label'); const r=lab?lab.querySelector('input[type=radio]'):(el.matches&&el.matches('input[type=radio]')?el:null); if(r) r.dataset.was=r.checked?'1':''; }
   if(el.matches(TEXT_SEL)){if(mode!=='ink')el.focus();return;}
   const t=el.closest('label,button,input,select');
   if(t) t.click();
@@ -812,7 +821,7 @@ const modeInk=document.getElementById('modeInk'),modeConv=document.getElementByI
 function lockFields(on){form.querySelectorAll(TEXT_SEL).forEach(el=>{el.readOnly=on;});if(on&&document.activeElement&&document.activeElement.matches&&document.activeElement.matches(TEXT_SEL))document.activeElement.blur();}
 function setMode(m){
   if(pending) flush();
-  mode=m;localStorage.setItem('suitcube-pen-mode',m);lockFields(m==='ink');
+  mode=m;localStorage.setItem('suitcube-pen-mode',m);lockFields(m==='ink');document.body.classList.toggle('inkmode',m==='ink');
   modeInk.classList.toggle('on',m==='ink');modeConv.classList.toggle('on',m==='convert');
   document.body.classList.toggle('convert',m==='convert');
   setEraser(false);
@@ -826,7 +835,7 @@ document.getElementById('clearInk').onclick=()=>{if(confirm('ล้างลา�
 document.getElementById('resetBtn').onclick=()=>{if(confirm('ล้างข้อมูลในฟอร์มทั้งหมด?')){form.reset();strokes=[];pending=null;redraw();redrawLive();localStorage.removeItem(KEY);}};
 
 window.addEventListener('load',()=>{fitPhone();sizeCanvas();load();syncMeasOk();fitPhone();
-  modeInk.classList.toggle('on',mode==='ink');modeConv.classList.toggle('on',mode==='convert');document.body.classList.toggle('convert',mode==='convert');lockFields(mode==='ink');});
+  modeInk.classList.toggle('on',mode==='ink');modeConv.classList.toggle('on',mode==='convert');document.body.classList.toggle('convert',mode==='convert');lockFields(mode==='ink');document.body.classList.toggle('inkmode',mode==='ink');});
 let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{fitPhone();sizeCanvas();},200);});
 </script>
 </body>
