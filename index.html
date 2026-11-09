@@ -561,7 +561,7 @@ function load(){
   strokes=Array.isArray(d.__strokes)?d.__strokes:[];
   redraw();
 }
-form.addEventListener('input',e=>{const t=e.target;if(t.closest&&t.closest('.meas')){const v=(t.value.replace(/[^0-9.½¼¾]/g,'').match(/^\d{0,2}(\.\d?)?[½¼¾]?/)||[''])[0];if(v!==t.value)t.value=v;}save();});form.addEventListener('change',save);
+form.addEventListener('input',e=>{const t=e.target;if(t.closest&&t.closest('.meas')){const v=(t.value.replace(/[^0-9.½¼¾]/g,'').match(/^\d{0,2}(\.\d{0,2})?[½¼¾]?/)||[''])[0];if(v!==t.value)t.value=v;}save();});form.addEventListener('change',save);
 
 /* ---------- phones: shrink the iPad-width sheet to fit the screen ---------- */
 let SCALE=1;
@@ -613,7 +613,7 @@ sheet.addEventListener('touchmove',blockStylus,{passive:false});
 
 const isMeas=el=>!!el.closest('.meas');
 const NUM_OK=/^[0-9.\/ ½¼¾]+$/;
-const MEAS_OK=/^\d{1,2}(\.\d)?[½¼¾]?$/;
+const MEAS_OK=/^\d{1,2}(\.\d{1,2})?[½¼¾]?$/;
 function normNum(v){v=v.replace(/,/g,'.').replace(/\s+/g,' ').trim();
   const m=v.match(/^(\d{1,2})\s*([13])\/([24])$/);
   if(m){const f={'1/2':'½','1/4':'¼','3/4':'¾'}[m[2]+'/'+m[3]];if(f) return m[1]+f;}
@@ -679,7 +679,7 @@ window.addEventListener('pointerup',endStroke);
 window.addEventListener('pointercancel',endStroke);
 function tapOn(el){
   if(!el) return;
-  if(el.matches(TEXT_SEL)){el.focus();return;}
+  if(el.matches(TEXT_SEL)){if(mode!=='ink')el.focus();return;}
   const t=el.closest('label,button,input,select');
   if(t) t.click();
 }
@@ -805,13 +805,14 @@ document.getElementById('sumPrint').onclick=()=>window.print();
 
 /* ---------- toolbar ---------- */
 const modeInk=document.getElementById('modeInk'),modeConv=document.getElementById('modeConv');
+function lockFields(on){form.querySelectorAll(TEXT_SEL).forEach(el=>{el.readOnly=on;});if(on&&document.activeElement&&document.activeElement.matches&&document.activeElement.matches(TEXT_SEL))document.activeElement.blur();}
 function setMode(m){
   if(pending) flush();
-  mode=m;localStorage.setItem('suitcube-pen-mode',m);
+  mode=m;localStorage.setItem('suitcube-pen-mode',m);lockFields(m==='ink');
   modeInk.classList.toggle('on',m==='ink');modeConv.classList.toggle('on',m==='convert');
   document.body.classList.toggle('convert',m==='convert');
   setEraser(false);
-  toast(m==='ink'?'โหมดลายมือ: เขียนตรงไหนก็ได้ ลายมือจะอยู่บนใบงาน':'โหมดแปลงตัวอักษร: เขียนลงบนช่อง ระบบจะแปลงเป็นตัวพิมพ์ให้');
+  toast(m==='ink'?'โหมดลายมือ: เขียนเป็นลายมือลงใบงาน ไม่แปลงเป็นตัวอักษร':'โหมดแปลงตัวอักษร: เขียนลงบนช่อง ระบบจะแปลงเป็นตัวพิมพ์ให้');
 }
 function setEraser(on){eraser=on;}
 modeInk.onclick=()=>setMode('ink');
@@ -821,7 +822,7 @@ document.getElementById('clearInk').onclick=()=>{if(confirm('ล้างลา�
 document.getElementById('resetBtn').onclick=()=>{if(confirm('ล้างข้อมูลในฟอร์มทั้งหมด?')){form.reset();strokes=[];pending=null;redraw();redrawLive();localStorage.removeItem(KEY);}};
 
 window.addEventListener('load',()=>{fitPhone();sizeCanvas();load();fitPhone();
-  modeInk.classList.toggle('on',mode==='ink');modeConv.classList.toggle('on',mode==='convert');document.body.classList.toggle('convert',mode==='convert');});
+  modeInk.classList.toggle('on',mode==='ink');modeConv.classList.toggle('on',mode==='convert');document.body.classList.toggle('convert',mode==='convert');lockFields(mode==='ink');});
 let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{fitPhone();sizeCanvas();},200);});
 </script>
 </body>
