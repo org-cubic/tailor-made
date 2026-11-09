@@ -114,10 +114,14 @@
   </div>
   <div class="field">ที่อยู่ <input name="address1"></div>
   <div class="field"><input name="address2"></div>
-  <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:4px 14px">
+  <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:4px 14px;align-items:end">
     <div class="field">งานทีม <input name="team"></div>
     <div class="field">ส่วนสูง <input name="height" inputmode="decimal"></div>
     <div class="field">น้ำหนัก <input name="weight" inputmode="decimal"></div>
+    <div class="opts" style="flex-wrap:nowrap;gap:4px 12px">
+      <label class="opt"><input type="radio" name="gender" value="ชาย">ชาย</label>
+      <label class="opt"><input type="radio" name="gender" value="หญิง">หญิง</label>
+    </div>
   </div>
 </div>
 
@@ -172,10 +176,6 @@
     <div style="padding:6px 10px;border-bottom:1.5px solid var(--line);display:flex;flex-direction:column">
       <label class="opt"><input type="radio" name="fit" value="standard">มาตรฐาน (พอดีตัว)</label>
       <label class="opt"><input type="radio" name="fit" value="comfort">ใส่สบาย (คลาสสิค)</label>
-    </div>
-    <div style="padding:6px 10px;border-bottom:1.5px solid var(--line)" class="opts">
-      <label class="opt"><input type="radio" name="gender" value="ชาย">ชาย</label>
-      <label class="opt"><input type="radio" name="gender" value="หญิง">หญิง</label>
     </div>
     <div style="padding:6px 10px;flex:1;align-content:center" class="opts">
       <label class="opt"><input type="radio" name="stage" value="fit1">ลองโครง1</label>
