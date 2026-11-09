@@ -97,13 +97,13 @@
 <form id="f" autocomplete="off">
 
 <!-- ===== Row 1: fabric / lining / job ===== -->
-<div class="row" style="grid-template-columns:1.25fr 1fr 1fr">
+<div class="row" style="grid-template-columns:1.25fr 1fr">
   <div class="cell">
     <div class="field">ผ้าหลัก <input name="main_fabric"></div>
     <div class="field">ผ้าสำรอง <input name="spare_fabric"></div>
     <div class="field">ผ้าซับใน <input name="lining_fabric"></div>
     <div class="field">กระดุม <input name="button"></div>
-    <div class="opts" style="margin-top:6px">
+    <div class="opts" style="margin-top:6px;display:grid;grid-template-columns:repeat(2,auto);justify-content:start;gap:4px 18px;white-space:nowrap">
       <label class="opt"><input type="radio" name="wool" value="50">Wool 50%</label>
       <label class="opt"><input type="radio" name="wool" value="50+">Wool 50%+</label>
       <label class="opt"><input type="radio" name="wool" value="70">Wool 70%</label>
@@ -118,11 +118,6 @@
       <label class="opt"><input type="radio" name="lining" value="half">ซับใน - ครึ่งตัว</label>
       <label class="opt"><input type="radio" name="lining" value="unlined">Unlined</label>
     </div>
-  </div>
-  <div class="cell">
-    <div class="field">ชื่อ <input name="name_top"></div>
-    <div class="field">สาขาที่รับ <input name="pickup_branch"></div>
-    <div class="field">งานทีม <input name="team"></div>
   </div>
 </div>
 
@@ -273,6 +268,7 @@
   </div>
   <div class="field">ที่อยู่ <input name="address1"></div>
   <div class="field"><input name="address2"></div>
+  <div class="field">งานทีม <input name="team"></div>
 </div>
 
 </form>
