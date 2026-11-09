@@ -561,7 +561,13 @@ function load(){
   strokes=Array.isArray(d.__strokes)?d.__strokes:[];
   redraw();
 }
-form.addEventListener('input',e=>{const t=e.target;if(t.closest&&t.closest('.meas')){const v=(t.value.replace(/[^0-9.½¼¾]/g,'').match(/^\d{0,2}(\.\d{0,2})?[½¼¾]?/)||[''])[0];if(v!==t.value)t.value=v;}save();});form.addEventListener('change',save);
+form.addEventListener('input',e=>{const t=e.target;if(t.closest&&t.closest('.meas')){
+  // never round or trim: a value that breaks the rule is refused and the last good value stays
+  const v=t.value.replace(/\s+/g,'');
+  if(/^\d{0,2}(\.\d{0,2})?[½¼¾]?$/.test(v)){t.value=v;t.dataset.ok=v;}
+  else{t.value=t.dataset.ok||'';if(typeof toast==='function')toast('ใส่ได้ 2 หลัก ทศนิยม 2 หลัก');}
+}save();});form.addEventListener('change',save);
+const syncMeasOk=()=>form.querySelectorAll('.meas input').forEach(i=>{i.dataset.ok=i.value;});
 
 /* ---------- phones: shrink the iPad-width sheet to fit the screen ---------- */
 let SCALE=1;
@@ -821,7 +827,7 @@ document.getElementById('undoBtn').onclick=()=>{strokes.pop();redraw();save();};
 document.getElementById('clearInk').onclick=()=>{if(confirm('ล้างลายมือทั้งหมด?')){strokes=[];redraw();save();}};
 document.getElementById('resetBtn').onclick=()=>{if(confirm('ล้างข้อมูลในฟอร์มทั้งหมด?')){form.reset();strokes=[];pending=null;redraw();redrawLive();localStorage.removeItem(KEY);}};
 
-window.addEventListener('load',()=>{fitPhone();sizeCanvas();load();fitPhone();
+window.addEventListener('load',()=>{fitPhone();sizeCanvas();load();syncMeasOk();fitPhone();
   modeInk.classList.toggle('on',mode==='ink');modeConv.classList.toggle('on',mode==='convert');document.body.classList.toggle('convert',mode==='convert');lockFields(mode==='ink');});
 let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{fitPhone();sizeCanvas();},200);});
 </script>
