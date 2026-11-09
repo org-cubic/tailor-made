@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta id="vp" name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>ใบสั่งตัด SUITCUBE</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
   :root{--ink:#1d1d1f;--line:#2b2b2b;--muted:#6b6b6b;--accent:#1a4fd8;--paper:#fff;--bg:#e9e7e2}
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Sarabun",system-ui,sans-serif;-webkit-text-size-adjust:100%}
-  .sheet{position:relative;max-width:1024px;margin:12px auto 110px;background:var(--paper);padding:14px;box-shadow:0 2px 14px rgba(0,0,0,.12)}
+  .sheet{position:relative;max-width:1024px;min-width:800px;margin:12px auto 110px;background:var(--paper);padding:14px;box-shadow:0 2px 14px rgba(0,0,0,.12)}
   .box{border:1.5px solid var(--line);padding:8px 10px}
   .grid{display:grid;gap:0}
   .row{display:grid;border:1.5px solid var(--line);border-top:none}
@@ -529,6 +529,22 @@ function load(){
 }
 form.addEventListener('input',e=>{const t=e.target;if(t.closest&&t.closest('.meas')){const v=t.value.replace(/[^0-9.\/ ½¼¾]/g,'');if(v!==t.value)t.value=v;}save();});form.addEventListener('change',save);
 
+/* ---------- phones: shrink the iPad-width sheet to fit the screen ---------- */
+let SCALE=1;
+const fitBox=document.createElement('div');fitBox.id='fitBox';sheet.parentNode.insertBefore(fitBox,sheet);fitBox.appendChild(sheet);
+function fitPhone(){
+  const W=840, vw=document.documentElement.clientWidth;
+  if(vw<800){
+    SCALE=vw/W;
+    sheet.style.cssText+=';width:'+W+'px;margin:0;transform:scale('+SCALE+');transform-origin:0 0';
+    fitBox.style.cssText='width:'+vw+'px;overflow:hidden;height:'+Math.ceil(sheet.offsetHeight*SCALE)+'px;margin-bottom:110px';
+  }else{
+    SCALE=1;sheet.style.transform='';sheet.style.width='';sheet.style.margin='';fitBox.style.cssText='';
+  }
+  const tb=document.querySelector('.toolbar');tb.style.transform='';
+  const tw=tb.offsetWidth;
+  if(tw>vw-12){tb.style.transformOrigin='center bottom';tb.style.transform='scale('+((vw-12)/tw).toFixed(3)+')';}
+}
 /* ---------- canvas drawing ---------- */
 function sizeCanvas(){
   for(const [c,x] of [[inkC,ink],[liveC,live]]){
@@ -579,7 +595,7 @@ function nearField(f,x,y){
   const r=f.getBoundingClientRect();
   return x>r.left-80&&x<r.right+80&&y>r.top-40&&y<r.bottom+40;
 }
-function rel(e){const r=sheet.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top,e.pressure||.5,Date.now()];}
+function rel(e){const r=sheet.getBoundingClientRect();return[(e.clientX-r.left)/SCALE,(e.clientY-r.top)/SCALE,e.pressure||.5,Date.now()];}
 
 let cur=null, pending=null, timer=null;
 sheet.addEventListener('pointerdown',e=>{
@@ -714,9 +730,9 @@ document.getElementById('clearInk').onclick=()=>{if(confirm('ล้างลา�
 document.getElementById('printBtn').onclick=()=>window.print();
 document.getElementById('resetBtn').onclick=()=>{if(confirm('ล้างข้อมูลในฟอร์มทั้งหมด?')){form.reset();strokes=[];pending=null;redraw();redrawLive();localStorage.removeItem(KEY);}};
 
-window.addEventListener('load',()=>{sizeCanvas();load();
+window.addEventListener('load',()=>{fitPhone();sizeCanvas();load();fitPhone();
   modeInk.classList.toggle('on',mode==='ink');modeConv.classList.toggle('on',mode==='convert');document.body.classList.toggle('convert',mode==='convert');});
-let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(sizeCanvas,200);});
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{fitPhone();sizeCanvas();},200);});
 </script>
 </body>
 </html>
