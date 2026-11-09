@@ -386,7 +386,7 @@ const sh=(o)=>S("0 0 80 50",
   P(`M47 15 L55 28 L50 30 L41.5 50 L45 50Z`,'tLapR',{sh:1})+
   Ln(`M12 ${o+1} Q8 ${o+14} 9 50`,.5,.5)+Ln(`M68 ${o+1} Q72 ${o+14} 71 50`,.7,.6));
 document.getElementById('shoulders').innerHTML=
-  pic('shoulder','square','ไหล่ตั้ง',sh(15))+pic('shoulder','normal','ไหล่ธรรมดา',sh(22))+pic('shoulder','sloped','ไหล่ลาด',sh(30));
+  pic('shoulder','square','ไหล่ตั้ง',sh(15))+pic('shoulder','normal','ไหล่ธรรมดา',sh(22))+pic('shoulder','sloped','ไหล่เท',sh(30));
 
 // ---- body shape: painted side-view figure facing right ----
 function body(d,c,b,s){
@@ -499,7 +499,7 @@ const ph=k=>`<img src="${PHOTO[k]}" alt="">`;
 
 const phW=k=>`<img class="wide" src="${PHOTO[k]}" alt="">`;
 document.getElementById('shoulders').innerHTML=
-  pic('shoulder','square','ไหล่ตั้ง',phW('sh_square'))+pic('shoulder','normal','ไหล่ธรรมดา',phW('sh_normal'))+pic('shoulder','sloped','ไหล่ลาด',phW('sh_sloped'));
+  pic('shoulder','square','ไหล่ตั้ง',phW('sh_square'))+pic('shoulder','normal','ไหล่ธรรมดา',phW('sh_normal'))+pic('shoulder','sloped','ไหล่เท',phW('sh_sloped'));
 document.getElementById('bodies').innerHTML=
   pic('body','slim','ผอมบาง',ph('body_slim'))+pic('body','normal','หุ่นปกติ',ph('body_normal'))+pic('body','belly','มีหน้าท้อง',ph('body_belly'))+pic('body','big','รูปร่างใหญ่',ph('body_big'));
 document.getElementById('waistBtn1').innerHTML=
