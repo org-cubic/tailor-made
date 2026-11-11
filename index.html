@@ -305,7 +305,7 @@
 </div>
 
 </form>
-<div class="ver">เวอร์ชัน 2026-11-09 · 14</div>
+<div class="ver">เวอร์ชัน 2026-11-11 · 15</div>
 </div>
 
 <div class="toolbar">
@@ -675,14 +675,14 @@ function endStroke(e){
   const c=cur; cur=null;
   if(!c.moved){                                     // a tap, not a stroke
     if(c.type==='pen'||c.viaInk) tapOn(c.el);
-    if(pending) timer=setTimeout(flush,900);
+    if(pending) timer=setTimeout(flush,1300);
     return;
   }
   if(c.kind==='ink'){ strokes.push({pts:c.pts.map(p=>p.slice(0,3)),erase:eraser}); save(); }
   else{
     if(!pending) pending={target:c.target,strokes:[]};
     pending.strokes.push(c.pts);
-    timer=setTimeout(flush,900);
+    timer=setTimeout(flush,1300);
   }
 }
 window.addEventListener('pointerup',endStroke);
@@ -700,20 +700,38 @@ function tapOn(el){
 /* ---------- handwriting -> text ---------- */
 const status=document.getElementById('status');
 function toast(msg,ms=2600){status.textContent=msg;status.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>status.hidden=true,ms);}
+const isNumField=t=>['numeric','decimal','tel'].includes(t.inputMode);
+// look-alike letters -> digits, Thai digits -> Arabic, for number fields
+const DIGIT_MAP={O:'0',o:'0',D:'0',Q:'0','°':'0',l:'1',I:'1',i:'1','|':'1','!':'1','/':'1',L:'1',Z:'2',z:'2',S:'5',s:'5',b:'6',G:'6',T:'7',B:'8',g:'9',q:'9',',':'.'};
+const THAI_DIG='๐๑๒๓๔๕๖๗๘๙';
+const thaiToArabic=v=>v.replace(/[๐-๙]/g,ch=>String(THAI_DIG.indexOf(ch)));
+function fixNum(v,keepSlash){
+  v=thaiToArabic(v).replace(/\s+/g,'');
+  if(keepSlash&&/^\d{1,2}[13]\/[24]$/.test(v)) return v;        // 19 1/2 style, handled by normNum
+  return [...v].map(ch=>DIGIT_MAP[ch]??ch).join('');
+}
 async function recognize(target,ss){
   const all=ss.flat(), xs=all.map(p=>p[0]), ys=all.map(p=>p[1]);
-  const x0=Math.min(...xs), y0=Math.min(...ys), t0=ss[0][0][3];
+  // tell the recognizer the size of the line being written on (field box), so 0/o, 1/l etc. read correctly
+  const sr=sheet.getBoundingClientRect(), tr=target.getBoundingClientRect();
+  const fx=(tr.left-sr.left)/SCALE, fy=(tr.top-sr.top)/SCALE, fw=tr.width/SCALE, fh=tr.height/SCALE;
+  const x0=Math.min(fx,...xs)-4, y0=Math.min(fy,...ys)-4;
+  const x1=Math.max(fx+fw,...xs)+4, y1=Math.max(fy+fh,...ys)+4;
+  const t0=ss[0][0][3];
   const inkData=ss.map(pts=>[pts.map(p=>Math.round(p[0]-x0)),pts.map(p=>Math.round(p[1]-y0)),pts.map(p=>p[3]-t0)]);
-  const numeric=['numeric','decimal','tel'].includes(target.inputMode);
-  const body={options:'enable_pre_space',requests:[{
-    writing_guide:{writing_area_width:Math.max(...xs)-x0+20,writing_area_height:Math.max(...ys)-y0+20},
-    ink:inkData,language:numeric?'en':'th',max_num_results:6,max_completions:0}]};
+  const numeric=isNumField(target);
+  const req={writing_guide:{writing_area_width:Math.round(x1-x0),writing_area_height:Math.round(y1-y0)},
+    ink:inkData,language:numeric?'en':'th',max_num_results:10,max_completions:0};
+  if(target.value) req.pre_context=target.value.slice(-20);
   const r=await fetch('https://inputtools.google.com/request?ime=handwriting&app=mobilesearch&cs=1&oe=UTF-8',
-    {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({options:'enable_pre_space',requests:[req]})});
   const d=await r.json();
   if(d[0]!=='SUCCESS') throw new Error('fail');
-  let c=(d[1][0][1]||[]).map(s=>s.trim()).filter(Boolean);
-  if(numeric) c=c.map(s=>s.replace(/\s+/g,' '));
+  let c=(d[1][0][1]||[]).map(v=>v.trim()).filter(Boolean);
+  if(numeric){
+    const ok=target.inputMode==='tel'?/^[0-9-]+$/:/^[0-9.]+$|^\d{1,2}[½¼¾]$|^\d{1,2}[13]\/[24]$/;
+    const seen=new Set(); c=c.map(v=>fixNum(v,true)).filter(v=>ok.test(v)&&!seen.has(v)&&seen.add(v));
+  }else c=c.map(thaiToArabic);
   return c;
 }
 function flush(){
@@ -722,12 +740,14 @@ function flush(){
   const {target,strokes:ss}=pending; pending=null; redrawLive();
   target.classList.add('busy');
   recognize(target,ss).then(c=>{
-    if(isMeas(target)){c=c.map(normNum).filter(x=>NUM_OK.test(x));
-      if(!c.length){toast('ช่องนี้ใส่ได้เฉพาะตัวเลข — ลองเขียนใหม่');return;}}
+    if(isNumField(target)){
+      if(isMeas(target)) c=c.map(normNum).filter(x=>NUM_OK.test(x));
+      if(!c.length){toast('อ่านตัวเลขไม่ออก — ลองเขียนใหม่ให้ใหญ่และชัดขึ้น');return;}
+    }
     if(!c.length) throw new Error('empty');
     insertText(target,c);
   }).catch(()=>{
-    if(isMeas(target)){toast('แปลงตัวเลขไม่สำเร็จ (ต้องต่ออินเทอร์เน็ต)');return;}
+    if(isNumField(target)){toast('แปลงตัวเลขไม่สำเร็จ (ต้องต่ออินเทอร์เน็ต)');return;}
     ss.forEach(pts=>strokes.push({pts:pts.map(p=>p.slice(0,3)),erase:false}));
     redraw();save();
     toast('แปลงไม่สำเร็จ — เก็บไว้เป็นลายมือแทน (ต้องต่ออินเทอร์เน็ต)');
